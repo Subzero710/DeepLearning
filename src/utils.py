@@ -73,3 +73,25 @@ def model_file_size_mb(path: str | Path) -> float:
     """Return file size in MiB."""
 
     return Path(path).stat().st_size / (1024 * 1024)
+
+def clear_previous_results(output_dirs: dict[str, Path]) -> None:
+    """Delete generated result files from previous experiment runs."""
+
+    files_to_delete = [
+        output_dirs["root"] / "metrics.csv",
+    ]
+
+    patterns = {
+        "confusion_matrices": ["*.csv"],
+        "training_curves": ["*.png"],
+        "models": ["*.keras", "*.h5"],
+    }
+
+    for directory_key, glob_patterns in patterns.items():
+        directory = output_dirs[directory_key]
+        for pattern in glob_patterns:
+            files_to_delete.extend(directory.glob(pattern))
+
+    for path in files_to_delete:
+        if path.exists() and path.is_file():
+            path.unlink()

@@ -13,6 +13,7 @@ from src.data import load_ecg200
 from src.evaluate import evaluate_classifier
 from src.models import get_model_builder
 from src.utils import (
+    clear_previous_results,
     ensure_output_dirs,
     model_file_size_mb,
     plot_training_curves,
@@ -37,6 +38,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--data-dir", type=str, default="data")
     parser.add_argument("--results-dir", type=str, default="results")
     parser.add_argument("--learning-rate", type=float, default=1e-3)
+    parser.add_argument(
+        "--overwrite-results",
+        action="store_true",
+        help="Delete previous generated results before running the experiment.",
+    )
+    parser.add_argument(
+        "--no-early-stopping",
+        action="store_true",
+        help="Disable early stopping and train for the requested number of epochs.",
+    )
     return parser.parse_args()
 
 
@@ -88,12 +99,16 @@ def train_one_model(
             monitor="val_loss",
             save_best_only=True,
         ),
-        tf.keras.callbacks.EarlyStopping(
-            monitor="val_loss",
-            patience=40,
-            restore_best_weights=True,
-        ),
     ]
+
+    if not args.no_early_stopping:
+        callbacks.append(
+            tf.keras.callbacks.EarlyStopping(
+                monitor="val_loss",
+                patience=100,
+                restore_best_weights=True,
+            )
+        )
 
     start_train = time.perf_counter()
     history = model.fit(
@@ -141,6 +156,7 @@ def train_one_model(
         "epochs_ran": len(history.history.get("loss", [])),
         "batch_size": args.batch_size,
         "validation_size": args.validation_size,
+        "early_stopping": not args.no_early_stopping,
     }
 
 
@@ -160,6 +176,10 @@ def append_metrics(metrics_path: Path, row: dict[str, object]) -> None:
 def main() -> None:
     args = parse_args()
     output_dirs = ensure_output_dirs(args.results_dir)
+
+    if args.overwrite_results:
+        clear_previous_results(output_dirs)
+
     metrics_path = output_dirs["root"] / "metrics.csv"
 
     for seed in args.seeds:
