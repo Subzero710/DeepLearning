@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Data
+data/
+
+# Generated results
+results/models/
+results/metrics.csv
+results/confusion_matrices/*.csv
+results/training_curves/*.png
+
+# Keras / checkpoints
+*.keras
+*.h5
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
