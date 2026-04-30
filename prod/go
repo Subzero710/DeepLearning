@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [ ! -f "models/ecg_model.keras" ]; then
+  echo "ERROR: models/ecg_model.keras is missing. Copy a trained Keras model from the training project before launching production." >&2
+  exit 1
+fi
+
+if [ "${PREPROCESS_MODE:-standard_scaler}" = "standard_scaler" ] && [ ! -f "models/preprocess.json" ]; then
+  echo "ERROR: models/preprocess.json is missing. Export/copy the preprocessing artifact from the training project before launching production." >&2
+  exit 1
+fi
+
+docker compose up --build

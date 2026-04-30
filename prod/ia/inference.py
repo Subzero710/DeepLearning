@@ -21,11 +21,11 @@ class Prediction:
 
 
 class ECGClassifier:
-    """Inference wrapper for the ECG200 models trained in the GitHub project.
+    """Inference wrapper for ECG200 Keras models.
 
-    The training code normalizes ECG200 with sklearn StandardScaler fitted on the
-    train split only. In production, the same mean/scale values must be provided
-    through /app/models/preprocess.json.
+    The production model expects exactly 96 ECG values. When PREPROCESS_MODE is
+    standard_scaler, the model also requires models/preprocess.json containing
+    the StandardScaler statistics used at training time.
     """
 
     def __init__(self) -> None:
@@ -58,7 +58,7 @@ class ECGClassifier:
     def load(self) -> None:
         if not self.model_path.exists():
             raise FileNotFoundError(
-                f"Model not found: {self.model_path}. Copy the selected .keras model to models/ecg_model.keras."
+                f"Model not found: {self.model_path}. Copy a trained model from the training project to models/ecg_model.keras."
             )
         self._load_preprocess_config()
         self.model = tf.keras.models.load_model(self.model_path)
@@ -92,8 +92,7 @@ class ECGClassifier:
                 )
         elif self.preprocess_mode == "standard_scaler":
             raise FileNotFoundError(
-                "PREPROCESS_MODE=standard_scaler requires models/preprocess.json. "
-                "Generate it with scripts/export_production_artifacts.py."
+                "PREPROCESS_MODE=standard_scaler requires models/preprocess.json copied/exported from the training project."
             )
 
     def _warmup(self) -> None:
@@ -156,10 +155,7 @@ class ECGClassifier:
         probabilities, raw_list = self._as_probabilities(raw)
 
         predicted_index = int(np.argmax(probabilities))
-        if predicted_index < len(self.class_names):
-            class_name = self.class_names[predicted_index]
-        else:
-            class_name = str(predicted_index)
+        class_name = self.class_names[predicted_index] if predicted_index < len(self.class_names) else str(predicted_index)
         display_label = self.display_labels.get(class_name, class_name)
 
         probability_by_class = {}

@@ -15,7 +15,7 @@
     <artifactId>ecg200-front</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>ecg200-front</name>
-    <description>Frontal Spring Boot pour le service IA ECG200</description>
+    <description>Standalone Spring Boot frontend for ECG200 inference</description>
 
     <properties>
         <java.version>21</java.version>
