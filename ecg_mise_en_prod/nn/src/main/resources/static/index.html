@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ECG200 classifier</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 960px; margin: 2rem auto; padding: 0 1rem; }
+        textarea { width: 100%; min-height: 180px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+        button { padding: .6rem 1rem; margin-top: .75rem; margin-right: .5rem; }
+        pre { background: #f4f4f4; padding: 1rem; overflow-x: auto; }
+        .hint { color: #555; }
+        .row { display: flex; gap: .5rem; flex-wrap: wrap; }
+    </style>
+</head>
+<body>
+<h1>Classification ECG200</h1>
+<p class="hint">Coller 96 valeurs séparées par des espaces, virgules, points-virgules ou retours ligne.</p>
+<textarea id="signal" placeholder="-0.112 -0.115 ..."></textarea>
+<div class="row">
+    <button onclick="predict()">Classifier</button>
+    <button onclick="config()">Charger / configurer le modèle</button>
+    <button onclick="health()">État du service IA</button>
+    <button onclick="sample()">Remplir un exemple synthétique</button>
+</div>
+<pre id="output">Aucun résultat.</pre>
+
+<script>
+function parseSignal(text) {
+    return text.trim().split(/[\s,;]+/).filter(Boolean).map(Number);
+}
+
+function show(obj) {
+    document.getElementById('output').textContent = JSON.stringify(obj, null, 2);
+}
+
+async function readJsonResponse(response) {
+    const text = await response.text();
+    try { return JSON.parse(text); } catch (_) { return {status: 'error', raw: text}; }
+}
+
+async function health() {
+    const response = await fetch('/api/health');
+    show(await readJsonResponse(response));
+}
+
+async function config() {
+    const response = await fetch('/api/config', { method: 'POST' });
+    show(await readJsonResponse(response));
+}
+
+async function predict() {
+    const signal = parseSignal(document.getElementById('signal').value);
+    const response = await fetch('/api/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ signal })
+    });
+    show(await readJsonResponse(response));
+}
+
+function sample() {
+    const values = Array.from({length: 96}, (_, i) => (Math.sin(i / 7) * 0.1).toFixed(6));
+    document.getElementById('signal').value = values.join(' ');
+}
+</script>
+</body>
+</html>

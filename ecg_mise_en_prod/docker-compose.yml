@@ -1,0 +1,38 @@
+services:
+  ia:
+    build:
+      context: ./ia
+    image: ecg200-ia
+    container_name: ecg200-ia
+    networks:
+      - ecg200
+    environment:
+      MODEL_PATH: /app/models/ecg_model.keras
+      PREPROCESS_PATH: /app/models/preprocess.json
+      PREPROCESS_MODE: ${PREPROCESS_MODE:-standard_scaler}
+      INPUT_LENGTH: ${INPUT_LENGTH:-96}
+    volumes:
+      - ./models:/app/models:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:80/health', timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  nn:
+    build:
+      context: ./nn
+    image: ecg200-front
+    container_name: ecg200-front
+    networks:
+      - ecg200
+    environment:
+      IA_BASE_URL: http://ia:80
+    ports:
+      - "8080:8080"
+    depends_on:
+      - ia
+
+networks:
+  ecg200:
+    driver: bridge
