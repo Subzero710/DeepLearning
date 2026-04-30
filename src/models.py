@@ -48,23 +48,23 @@ def build_cnn(input_shape: tuple[int, ...], nb_classes: int) -> tf.keras.Model:
 
 
 def build_rnn(input_shape: tuple[int, ...], nb_classes: int) -> tf.keras.Model:
-    """Placeholder for the RNN/LSTM model.
+    """Build an LSTM-based recurrent model for ECG200.
 
-    To be implemented by the teammate responsible for the RNN part.
-
-    Suggested starting point:
-
-        inputs = tf.keras.layers.Input(shape=input_shape)
-        x = tf.keras.layers.LSTM(32)(inputs)
-        x = tf.keras.layers.Dropout(0.2)(x)
-        outputs = tf.keras.layers.Dense(nb_classes, activation="softmax")(x)
-        return tf.keras.Model(inputs=inputs, outputs=outputs, name="LSTM")
+    The ECG signal is interpreted as a sequence of time steps with one feature
+    per time step. LSTM is used instead of a vanilla SimpleRNN to reduce the
+    vanishing-gradient issue discussed in the RNN course.
     """
 
-    raise NotImplementedError(
-        "RNN/LSTM model not implemented yet. "
-        "Implement build_rnn() in src/models.py before training with --models rnn."
-    )
+    inputs = tf.keras.layers.Input(shape=input_shape)
+
+    x = tf.keras.layers.LSTM(units=64)(inputs)
+
+    outputs = tf.keras.layers.Dense(
+        units=nb_classes,
+        activation="softmax",
+    )(x)
+
+    return tf.keras.Model(inputs=inputs, outputs=outputs, name="LSTM64")
 
 
 def get_model_builder(model_name: str):
